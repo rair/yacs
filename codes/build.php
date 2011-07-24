@@ -55,8 +55,8 @@ function include_codes() {
 	Safe::set_time_limit(30);
 
 	// open the directory
-	$path = $context['path_to_root'].'codes'
-	if(!$dir = Safe::opendir(path)) {
+	$path = $context['path_to_root'].'codes';
+	if(!$dir = Safe::opendir($path)) {
 		$context['text'] .= sprintf(i18n::s('Impossible to read %s.'), $path).BR."\n";
 		return;
 	}
@@ -141,7 +141,7 @@ if(!Surfer::is_associate() && (file_exists('../parameters/switch.on') || file_ex
 			$input = '<input type="checkbox" name="'.$id.'" value="Y" checked="checked" />';
 
 			// sample
-			if($description) = i18n::l($code, 'sample'))
+			if($description = i18n::l($code, 'sample'))
 				$description .= BR;
 
 			// user information
@@ -202,6 +202,8 @@ if(!Surfer::is_associate() && (file_exists('../parameters/switch.on') || file_ex
 		Safe::unlink('../parameters/codes.include.php.bak');
 		Safe::rename('../parameters/codes.include.php', '../parameters/codes.include.php.bak');
 
+		$loaded_items = array();
+
 		// consider each codes
 		foreach($codesyacs as $code) {
 
@@ -242,21 +244,27 @@ if(!Surfer::is_associate() && (file_exists('../parameters/switch.on') || file_ex
 
 			// user information
 			$label = i18n::l($code, 'label');
-			$context['text'] .= sprintf(i18n::s('formating codes %s labelised %s'), $code['id'], $label).BR."\n";
+			$context['text'] .= sprintf(i18n::s('code %s  %s'), $code['id'], $label).BR."\n";
 
 			//compilation
-			// TODO
-			// 		// label
-			//		pattern[] =
-			//		replace[] =
+			$loaded_items[] = "\n"
+				."\t\t".'// '.$label."\n"
+				."\t\t".'$pattern[] = \''.$code['pattern'].'\';'."\n"
+				."\t\t".'$replace[] = \''.$code['replace'].'\';'."\n";
 		}
 
 		// the header section
 		$content = '<?php'."\n"
 			.'// This file has been created by the script codes/build.php'."\n"
 			.'// on '.gmdate("F j, Y, g:i a").' GMT, for '.Surfer::get_name().'. Please do not modify it manually.'."\n"
-			."\n";
-			// TODO : declare pattern and replace array
+			."\n"
+			.'class Codes_Included {'."\n\n";
+
+		// the loading patterns function
+		$content .= "\t"
+			.'function load_patterns(&$pattern,&$replace) {'."\n\n"
+			.implode('', array_values($loaded_items))."\n"
+			."\t".'}'."\n";
 
 		// the tail section
 		$content .= '}'."\n"
